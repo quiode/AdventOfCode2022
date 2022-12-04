@@ -1,4 +1,6 @@
-use std::{ fs::File, io::{ BufRead, BufReader, Lines } };
+use std::{ fs::File, io::{ BufReader, Lines } };
+
+use crate::line_manager::get_lines;
 
 pub fn main() {
     let lines = get_lines("input.txt");
@@ -60,31 +62,15 @@ fn problem2(lines: Lines<BufReader<File>>) -> i32 {
     sum
 }
 
-fn get_lines(path: &str) -> Lines<BufReader<File>> {
-    let input_file = File::open(path).unwrap();
-    BufReader::new(input_file).lines()
-}
-
 #[cfg(test)]
 mod test {
-    use std::{ fs::File, io::{ Write, self, BufRead, Lines, BufReader }, thread::Result };
+    use crate::line_manager::{ create_lines, TEST_FILE };
 
-    use super::{ problem1, get_lines, problem2 };
+    use super::{ problem1, problem2 };
 
     #[test]
     fn problem1_test() {
-        let result = problem1(get_sample_lines());
-        assert_eq!(result, 24000);
-    }
-
-    #[test]
-    fn problem2_test() {
-        let result = problem2(get_sample_lines());
-        assert_eq!(result, 45000);
-    }
-
-    fn get_sample_lines() -> Lines<BufReader<File>> {
-        let input = "1000
+        let result = problem1(create_lines("1000
 2000
 3000
 
@@ -98,12 +84,27 @@ mod test {
 9000
 
 10000
-";
+", TEST_FILE));
+        assert_eq!(result, 24000);
+    }
 
-        let mut file = File::create("test-input.txt").unwrap();
-        file.write_all(&input.as_bytes()).unwrap();
-        drop(file);
+    #[test]
+    fn problem2_test() {
+        let result = problem2(create_lines("1000
+2000
+3000
 
-        get_lines("test-input.txt")
+4000
+
+5000
+6000
+
+7000
+8000
+9000
+
+10000
+", TEST_FILE));
+        assert_eq!(result, 45000);
     }
 }

@@ -1,6 +1,5 @@
 #![feature(iter_next_chunk)]
 #![allow(dead_code)]
-mod dayx;
 pub mod line_manager;
 pub mod types;
 pub mod day1;

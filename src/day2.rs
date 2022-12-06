@@ -1,6 +1,4 @@
-use std::{ fs::File, io::{ BufReader, Lines } };
-
-use crate::line_manager;
+use crate::{ line_manager, types::Lines };
 
 pub fn main() {
     let lines = line_manager::get_lines(line_manager::FILE);
@@ -9,7 +7,7 @@ pub fn main() {
     println!("{}", solution);
 }
 
-fn problem1(lines: Lines<BufReader<File>>) -> i32 {
+fn problem1(lines: Lines) -> i32 {
     let mut score = 0;
 
     for line in lines {
@@ -34,7 +32,7 @@ fn problem1(lines: Lines<BufReader<File>>) -> i32 {
     score
 }
 
-fn problem2(lines: Lines<BufReader<File>>) -> i32 {
+fn problem2(lines: Lines) -> i32 {
     let mut score = 0;
 
     for line in lines {

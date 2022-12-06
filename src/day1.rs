@@ -1,15 +1,13 @@
-use std::{ fs::File, io::{ BufReader, Lines } };
-
-use crate::line_manager::get_lines;
+use crate::{ line_manager::{ get_lines, self }, types::Lines };
 
 pub fn main() {
-    let lines = get_lines("input.txt");
+    let lines = get_lines(line_manager::FILE);
 
     // println!("Problem 1: {}", problem1(lines));
     println!("Problem 2: {}", problem2(lines));
 }
 
-fn problem1(lines: Lines<BufReader<File>>) -> i32 {
+fn problem1(lines: Lines) -> i32 {
     let mut biggest_cal = 0;
     let mut current_cal = 0;
 
@@ -30,7 +28,7 @@ fn problem1(lines: Lines<BufReader<File>>) -> i32 {
     biggest_cal
 }
 
-fn problem2(lines: Lines<BufReader<File>>) -> i32 {
+fn problem2(lines: Lines) -> i32 {
     let mut top3: [i32; 3] = [0; 3];
 
     let mut current_cal = 0;

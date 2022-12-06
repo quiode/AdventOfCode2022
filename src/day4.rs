@@ -1,6 +1,6 @@
-use std::{ io::{ Lines, BufReader }, fs::File, ops::Range };
+use std::{ ops::Range };
 
-use crate::line_manager;
+use crate::{ line_manager, types::Lines };
 
 pub fn main() {
     let lines = line_manager::get_lines(line_manager::FILE);
@@ -9,7 +9,7 @@ pub fn main() {
     println!("Problem 2: {}", problem2(lines));
 }
 
-fn problem1(lines: Lines<BufReader<File>>) -> i32 {
+fn problem1(lines: Lines) -> i32 {
     let mut sum = 0;
 
     for line in lines {
@@ -26,7 +26,7 @@ fn problem1(lines: Lines<BufReader<File>>) -> i32 {
     sum
 }
 
-fn problem2(lines: Lines<BufReader<File>>) -> i32 {
+fn problem2(lines: Lines) -> i32 {
     let mut sum = 0;
 
     for line in lines {

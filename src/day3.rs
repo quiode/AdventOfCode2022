@@ -1,6 +1,6 @@
-use std::{ io::{ Lines, BufReader }, fs::File, collections::HashMap };
+use std::{ collections::HashMap };
 
-use crate::line_manager;
+use crate::{ line_manager, types::Lines };
 
 pub fn main() {
     let lines = line_manager::get_lines(line_manager::FILE);
@@ -9,7 +9,7 @@ pub fn main() {
     println!("Problem 2: {}", problem2(lines));
 }
 
-fn problem1(lines: Lines<BufReader<File>>) -> i32 {
+fn problem1(lines: Lines) -> i32 {
     let mut sum = 0;
     let values: HashMap<char, i32> = get_values();
 
@@ -28,7 +28,7 @@ fn problem1(lines: Lines<BufReader<File>>) -> i32 {
     sum
 }
 
-fn problem2(lines: Lines<BufReader<File>>) -> i32 {
+fn problem2(lines: Lines) -> i32 {
     let mut sum = 0;
     let values = get_values();
 

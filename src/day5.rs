@@ -1,34 +1,31 @@
-use std::fs::File;
-use std::io::{BufReader, Lines};
+use crate::{ types::Lines, line_manager };
 
 type Stacks = Vec<Vec<char>>;
 type Instruction = (u32, usize, usize);
 
 pub fn main() {
-    let lines = crate::line_manager::get_lines("input.txt");
+    let lines = crate::line_manager::get_lines(line_manager::FILE);
 
     // println!("Problem 1: {}", problem1(lines));
     println!("Problem 2: {}", problem2(lines));
 }
 
-fn problem1(lines: Lines<BufReader<File>>) -> String {
+fn problem1(lines: Lines) -> String {
     // parse input
     let (mut stacks, instructions) = parse_input(lines);
 
     // execute instructions
     stacks = crane_1_execute_instructions(&instructions, stacks);
 
-
     calc_top_items(&stacks)
 }
 
-fn problem2(lines: Lines<BufReader<File>>) -> String {
+fn problem2(lines: Lines) -> String {
     // parse input
     let (mut stacks, instructions) = parse_input(lines);
 
     // execute instructions
     stacks = crane_2_execute_instructions(&instructions, stacks);
-
 
     calc_top_items(&stacks)
 }
@@ -58,7 +55,7 @@ fn crane_1_execute_instructions(instructions: &Vec<Instruction>, mut stacks: Sta
 fn crane_2_execute_instructions(instructions: &Vec<Instruction>, mut stacks: Stacks) -> Stacks {
     for instruction in instructions {
         let clone = stacks[instruction.1].clone();
-        let split = clone.split_at(stacks[instruction.1].len() - instruction.0 as usize);
+        let split = clone.split_at(stacks[instruction.1].len() - (instruction.0 as usize));
         stacks[instruction.1] = Vec::from(split.0);
         let cargo = split.1;
 
@@ -68,7 +65,7 @@ fn crane_2_execute_instructions(instructions: &Vec<Instruction>, mut stacks: Sta
     stacks
 }
 
-fn parse_input(lines: Lines<BufReader<File>>) -> (Stacks, Vec<Instruction>) {
+fn parse_input(lines: Lines) -> (Stacks, Vec<Instruction>) {
     let mut stacks: Stacks = vec![];
     // set of instructions, move i32 from usize to usize
     let mut instructions: Vec<Instruction> = vec![];
@@ -94,7 +91,11 @@ fn parse_input(lines: Lines<BufReader<File>>) -> (Stacks, Vec<Instruction>) {
             }
         } else if line.contains("move") {
             let splits = line.split(" ").collect::<Vec<_>>();
-            let instruction: Instruction = (splits[1].parse::<u32>().unwrap(), splits[3].parse::<usize>().unwrap() - 1, splits[5].parse::<usize>().unwrap() - 1) as Instruction;
+            let instruction: Instruction = (
+                splits[1].parse::<u32>().unwrap(),
+                splits[3].parse::<usize>().unwrap() - 1,
+                splits[5].parse::<usize>().unwrap() - 1,
+            ) as Instruction;
             instructions.push(instruction);
         }
     }
@@ -102,15 +103,16 @@ fn parse_input(lines: Lines<BufReader<File>>) -> (Stacks, Vec<Instruction>) {
     (stacks, instructions)
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::day5::{problem1, problem2};
-    use crate::line_manager::{create_lines, TEST_FILE};
+    use crate::day5::{ problem1, problem2 };
+    use crate::line_manager::{ create_lines, TEST_FILE };
 
     #[test]
     fn problem1_test() {
-        let solution = problem1(create_lines("    [D]
+        let solution = problem1(
+            create_lines(
+                "    [D]
 [N] [C]
 [Z] [M] [P]
  1   2   3
@@ -119,14 +121,19 @@ move 1 from 2 to 1
 move 3 from 1 to 3
 move 2 from 2 to 1
 move 1 from 1 to 2
-", TEST_FILE));
+",
+                TEST_FILE
+            )
+        );
 
         assert_eq!(solution, "CMZ");
     }
 
     #[test]
     fn problem2_test() {
-        let solution = problem2(create_lines("    [D]
+        let solution = problem2(
+            create_lines(
+                "    [D]
 [N] [C]
 [Z] [M] [P]
  1   2   3
@@ -135,7 +142,10 @@ move 1 from 2 to 1
 move 3 from 1 to 3
 move 2 from 2 to 1
 move 1 from 1 to 2
-", TEST_FILE));
+",
+                TEST_FILE
+            )
+        );
 
         assert_eq!(solution, "MCD");
     }

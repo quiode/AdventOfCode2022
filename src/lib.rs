@@ -1,4 +1,4 @@
-#![feature(iter_next_chunk)]
+#![feature(iter_next_chunk, slice_group_by)]
 #![allow(dead_code)]
 pub mod line_manager;
 pub mod types;

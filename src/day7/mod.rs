@@ -1,4 +1,4 @@
-use std::{ str::FromStr, convert::Infallible };
+use std::{ str::FromStr, convert::Infallible, fs, io::Write };
 
 use crate::{ line_manager, types::Lines };
 
@@ -16,7 +16,9 @@ pub fn main() {
 fn problem1(lines: Lines) -> u64 {
     let directory = build_directory(lines);
 
-    println!("{}", serde_json::to_string(&directory).unwrap());
+    let mut file = fs::File::create("test.json").unwrap();
+
+    file.write_all(serde_json::to_string_pretty(&directory).unwrap().as_bytes()).unwrap();
 
     directory.smallest_dirs_total(100_000)
 }

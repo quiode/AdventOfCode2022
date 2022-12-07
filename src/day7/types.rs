@@ -1,47 +1,52 @@
+use std::rc::Rc;
+
 trait DiskObject {
     fn get_name(&self) -> &str;
-    fn get_parent(&self) -> Option<&dyn DiskObject>;
+    fn get_parent(&self) -> Option<Rc<dyn DiskObject>>;
     fn calc_size(&self) -> u64;
 }
 
-pub mod Directory {
-    use std::borrow::Borrow;
-    use crate::day7::types::DiskObject;
-    use crate::day7::types::File::File;
+pub mod directory {
+    use std::rc::Rc;
 
-    pub struct Directory<'a> {
-        parent: Option<Box<&'a Directory<'a>>>,
-        children: Vec<Box<dyn DiskObject>>,
-        name: String
+    use super::DiskObject;
+    use super::file::File;
+
+    pub struct Directory {
+        parent: Option<Rc<Directory>>,
+        children: Vec<Rc<dyn DiskObject>>,
+        name: String,
     }
 
-    impl <'a>Directory<'a> {
-        pub fn new(parent: Option<&'a Directory<'_>>, name: &str) -> Self {
+    impl Directory {
+        pub fn new(parent: Option<Rc<Directory>>, name: &str) -> Self {
             let parent = match parent {
-                Some(parent) => Some(Box::new(parent)),
+                Some(parent) => Some(parent.clone()),
                 None => None,
             };
 
             Self {
                 parent,
                 name: name.to_string(),
-                children: vec![]
+                children: vec![],
             }
         }
 
-        pub fn add_file(&mut self, file: File) -> &mut Self {
-            self.children.push(Box::new(file));
+        pub fn add_file(&mut self, file: Rc<File>) -> &mut Self {
+            self.children.push(file.clone());
             self
         }
 
-        pub fn add_directory(&mut self, name: &str) -> &Directory {
-            let directory = Directory::new(Some(&self), name);
-            self.children.push(Box::new(directory));
-            self.children.last().unwrap().
+        pub fn add_directory(self: Rc<Directory>, name: &str) {
+            todo!()
+        }
+
+        pub fn add_parent(&mut self, directory: Rc<Directory>) {
+            self.parent.replace(directory);
         }
     }
 
-    impl <'a>Default for Directory<'a> {
+    impl Default for Directory {
         fn default() -> Self {
             Self {
                 children: vec![],
@@ -51,18 +56,14 @@ pub mod Directory {
         }
     }
 
-    impl <'a>DiskObject for Directory<'a> {
+    impl DiskObject for Directory {
         fn get_name(&self) -> &str {
             &self.name
         }
 
-        fn get_parent(&self) -> Option<&dyn DiskObject> {
-            return if let Some(parent) = &self.parent {
-                let parent: &Directory = parent;
-                Some(parent)
-            } else {
-                None
-            }
+        fn get_parent(&self) -> Option<Rc<dyn DiskObject>> {
+            self.parent.clone();
+            todo!()
         }
 
         fn calc_size(&self) -> u64 {
@@ -76,23 +77,25 @@ pub mod Directory {
     }
 }
 
-pub mod File {
-    use crate::day7::types::Directory::Directory;
-    use crate::day7::types::DiskObject;
+pub mod file {
+    use std::rc::Rc;
 
-   pub struct File<'a> {
-        parent: Directory<'a>,
+    use super::directory::Directory;
+    use super::DiskObject;
+
+    pub struct File {
+        parent: Rc<Directory>,
         size: u64,
-        name: String
+        name: String,
     }
 
-    impl <'a>DiskObject for File<'a> {
+    impl DiskObject for File {
         fn get_name(&self) -> &str {
             &self.name
         }
 
-        fn get_parent(&self) -> Option<&dyn DiskObject> {
-            Some(&self.parent)
+        fn get_parent(&self) -> Option<Rc<dyn DiskObject + 'static>> {
+            Some(self.parent.clone())
         }
 
         fn calc_size(&self) -> u64 {

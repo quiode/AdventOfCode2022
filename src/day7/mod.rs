@@ -1,5 +1,4 @@
-use std::borrow::Borrow;
-use crate::{line_manager, types::Lines};
+use crate::{ line_manager, types::Lines };
 
 mod types;
 
@@ -18,16 +17,16 @@ fn problem2(lines: Lines) -> i32 {
     todo!()
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use crate::day7::problem1;
-    use crate::line_manager::{create_lines, TEST_FILE};
+    use crate::line_manager::{ create_lines, TEST_FILE };
 
     #[test]
     fn problem1_test() {
-        let result = problem1(create_lines("$ cd /
+        let result = problem1(
+            create_lines(
+                "$ cd /
 $ ls
 dir a
 14848514 b.txt
@@ -50,7 +49,10 @@ $ ls
 8033020 d.log
 5626152 d.ext
 7214296 k
-", TEST_FILE));
+",
+                TEST_FILE
+            )
+        );
 
         assert_eq!(result, 95437);
     }

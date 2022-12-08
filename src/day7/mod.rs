@@ -59,20 +59,22 @@ impl FromStr for Instruction {
     type Err = Infallible;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.contains(" cd ") {
-            let mut info = s.split(" ");
-            let path = info.nth(2).unwrap();
-            Ok(Instruction::NavInstruction(NavOption::from_str(path).unwrap()))
+        if s.starts_with("$") {
+            if s.contains(" cd ") {
+                let mut info = s.split(" ");
+                let path = info.nth(2).unwrap();
+                Ok(Instruction::NavInstruction(NavOption::from_str(path).unwrap()))
+            } else {
+                Ok(Instruction::None)
+            }
         } else {
-            if s.contains("dir ") {
+            if s.starts_with("dir ") {
                 let mut info = s.split(" ");
                 Ok(
                     Instruction::File(
                         File::new(types::FileType::Directory, 0, info.nth(1).unwrap())
                     )
                 )
-            } else if s.contains(" ls") {
-                Ok(Instruction::None)
             } else {
                 let mut info = s.split(" ");
                 Ok(

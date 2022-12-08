@@ -170,6 +170,7 @@ pub enum NavOption {
 impl FromStr for NavOption {
     type Err = Infallible;
 
+    /// `s` is the path
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "/" => Ok(Self::ROOT),

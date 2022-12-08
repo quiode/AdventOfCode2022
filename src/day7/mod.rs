@@ -9,8 +9,8 @@ mod types;
 pub fn main() {
     let lines = line_manager::get_lines(line_manager::FILE);
 
-    println!("Problem 1: {}", problem1(lines));
-    // println!("Problem 2: {}", problem2(lines));
+    // println!("Problem 1: {}", problem1(lines));
+    println!("Problem 2: {}", problem2(lines));
 }
 
 fn problem1(lines: Lines) -> u64 {
@@ -24,6 +24,11 @@ fn problem1(lines: Lines) -> u64 {
 }
 
 fn problem2(lines: Lines) -> i32 {
+    const MIN_FREE_SPACE: u64 = 30000000;
+    let directory = build_directory(lines);
+    let dir_size = directory.calculate_size();
+    let dir_size_to_delete = MIN_FREE_SPACE - dir_size;
+
     todo!()
 }
 

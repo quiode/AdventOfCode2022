@@ -23,13 +23,16 @@ fn problem1(lines: Lines) -> u64 {
     directory.smallest_dirs_total(100_000)
 }
 
-fn problem2(lines: Lines) -> i32 {
+fn problem2(lines: Lines) -> u64 {
     const MIN_FREE_SPACE: u64 = 30000000;
+    const FILE_SYSTEM_SIZE: u64 = 70000000;
     let directory = build_directory(lines);
     let dir_size = directory.calculate_size();
-    let dir_size_to_delete = MIN_FREE_SPACE - dir_size;
+    let free_space = FILE_SYSTEM_SIZE - dir_size;
+    let dir_size_to_delete = MIN_FREE_SPACE - free_space;
+    let space_freed = directory.find_smallest_dir_with_min_size(dir_size_to_delete);
 
-    todo!()
+    return space_freed;
 }
 
 fn build_directory(lines: Lines) -> File {
@@ -100,6 +103,8 @@ impl FromStr for Instruction {
 mod tests {
     use crate::day7::problem1;
     use crate::line_manager::{ create_lines, TEST_FILE };
+
+    use super::problem2;
 
     #[test]
     fn problem1_test_1() {
@@ -1194,6 +1199,35 @@ $ ls
 
     #[test]
     fn problem2_test() {
-        todo!()
+        let result = problem2(
+            create_lines(
+                "$ cd /
+$ ls
+dir a
+14848514 b.txt
+8504156 c.dat
+dir d
+$ cd a
+$ ls
+dir e
+29116 f
+2557 g
+62596 h.lst
+$ cd e
+$ ls
+584 i
+$ cd ..
+$ cd ..
+$ cd d
+$ ls
+4060174 j
+8033020 d.log
+5626152 d.ext
+7214296 k",
+                TEST_FILE
+            )
+        );
+
+        assert_eq!(result, 24933642);
     }
 }

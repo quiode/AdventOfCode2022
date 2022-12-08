@@ -154,24 +154,26 @@ impl File {
 
     /// finds the smallest directory that is still bigger than `size` and returns the size of that dir
     pub fn find_smallest_dir_with_min_size(&self, min_size: u64) -> u64 {
-        // if self.file_type == FileType::Directory {
-        //     let size = self.calculate_size();
+        let mut result = u64::MAX;
+        if self.file_type == FileType::Directory {
+            let size = self.calculate_size();
 
-        //     if size >= min_size {
-        //         let smallest_children = self.children
-        //             .iter()
-        //             .filter(
-        //                 |child| child.calculate_size() >= min_size && child.calculate_size() < size
-        //             );
-        //         let smallest_child = smallest_children.map(|child| child.calculate_size()).min();
+            if size >= min_size {
+                result = size;
+                let smallest_child = self.children
+                    .iter()
+                    .map(|c| c.find_smallest_dir_with_min_size(min_size))
+                    .min();
 
-        //         if let Some(smallest_child_size) = smallest_child {
-        //             let smallest_dir_size = smallest_child_size;
-        //         }
-        //     }
-        // }
+                if let Some(smallest_child_size) = smallest_child {
+                    if smallest_child_size < size && smallest_child_size >= min_size {
+                        result = smallest_child_size;
+                    }
+                }
+            }
+        }
 
-        todo!()
+        result
     }
 }
 

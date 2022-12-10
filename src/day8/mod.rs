@@ -23,7 +23,9 @@ fn problem1(lines: Lines) -> u32 {
             .collect::<String>()
     );
     forest.set_visible();
-    print!("{}", forest.get_forest(true));
+
+    // print!("{}", forest.get_forest(true));
+    // print!("{}", forest.get_forest(false));
 
     forest.calc_visible()
 }

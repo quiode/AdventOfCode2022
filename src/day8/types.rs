@@ -1,4 +1,4 @@
-use std::{ fmt::Debug, borrow::BorrowMut };
+use std::{ fmt::Debug };
 
 #[derive(Debug)]
 pub struct Forest {
@@ -28,11 +28,11 @@ impl Forest {
         self.dimensions = (row_count, index / row_count);
     }
 
-    pub fn navigate<'a>(
+    fn navigate<'a>(
         direction: Direction,
         tree: &'a Tree,
         trees: &'a Vec<Tree>,
-        dimensions: &'a (usize, usize)
+        dimensions: (usize, usize)
     ) -> &'a Tree {
         match direction {
             Direction::TOP => {
@@ -64,6 +64,43 @@ impl Forest {
         }
     }
 
+    /// gets all trees in the same row/column in the specified direction
+    fn get_every<'a>(
+        direction: Direction,
+        tree: &'a Tree,
+        trees: &'a Vec<Tree>,
+        dimensions: (usize, usize)
+    ) -> Vec<&'a Tree> {
+        let mut output_trees: Vec<&Tree> = vec![];
+        let column = Self::calc_column(tree, trees, dimensions);
+        let row = Self::calc_row(tree, trees, dimensions);
+
+        match direction {
+            Direction::TOP => {
+                for i in 0..row {
+                    output_trees.push(&trees[Self::get_index(column, i, dimensions)]);
+                }
+            }
+            Direction::LEFT => {
+                for i in 0..column {
+                    output_trees.push(&trees[Self::get_index(i, row, dimensions)]);
+                }
+            }
+            Direction::BOTTOM => {
+                for i in row + 1..dimensions.1 {
+                    output_trees.push(&trees[Self::get_index(column, i, dimensions)]);
+                }
+            }
+            Direction::RIGHT => {
+                for i in column + 1..dimensions.0 {
+                    output_trees.push(&trees[Self::get_index(i, row, dimensions)]);
+                }
+            }
+        }
+
+        output_trees
+    }
+
     // sets trees visible status
     pub fn set_visible(&mut self) {
         // every tree on the edge is visible
@@ -81,24 +118,23 @@ impl Forest {
             self.trees[right_row].visible = Some(true);
         }
 
-        // calculate for each tree
+        // calculate for each tree which has not been set
         let trees = self.trees.clone();
         for tree in self.trees.iter_mut() {
             if tree.visible.is_none() {
-                let surroundings = [
-                    Forest::navigate(Direction::TOP, &tree, &trees, &self.dimensions),
-                    Forest::navigate(Direction::RIGHT, &tree, &trees, &self.dimensions),
-                    Forest::navigate(Direction::BOTTOM, &tree, &trees, &self.dimensions),
-                    Forest::navigate(Direction::LEFT, &tree, &trees, &self.dimensions),
-                ];
-
-                let is_visible = surroundings
-                    .iter()
-                    .any(
-                        |surrounding|
-                            surrounding.height < tree.height &&
-                            surrounding.visible.is_some_and(|v| v)
-                    );
+                let is_visible =
+                    Self::get_every(Direction::LEFT, tree, &trees, self.dimensions)
+                        .iter()
+                        .all(|t| t.height < tree.height) ||
+                    Self::get_every(Direction::TOP, tree, &trees, self.dimensions)
+                        .iter()
+                        .all(|t| t.height < tree.height) ||
+                    Self::get_every(Direction::RIGHT, tree, &trees, self.dimensions)
+                        .iter()
+                        .all(|t| t.height < tree.height) ||
+                    Self::get_every(Direction::BOTTOM, tree, &trees, self.dimensions)
+                        .iter()
+                        .all(|t| t.height < tree.height);
 
                 tree.visible = Some(is_visible);
             }
@@ -143,6 +179,21 @@ impl Forest {
         }
 
         output
+    }
+
+    /// calculates in which row the tree is
+    fn calc_row<'a>(tree: &'a Tree, trees: &'a Vec<Tree>, dimensions: (usize, usize)) -> usize {
+        tree.index / dimensions.0
+    }
+
+    /// calculates in which column the tree is
+    fn calc_column<'a>(tree: &'a Tree, trees: &'a Vec<Tree>, dimensions: (usize, usize)) -> usize {
+        tree.index % dimensions.0
+    }
+
+    /// gets the index of the tree in trees with `dimensions` in `row` and `column`
+    fn get_index(column: usize, row: usize, dimensions: (usize, usize)) -> usize {
+        row * dimensions.0 + column
     }
 }
 

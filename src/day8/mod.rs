@@ -2,6 +2,8 @@ mod types;
 
 use crate::{ types::Lines, line_manager };
 
+use self::types::Forest;
+
 pub fn main() {
     let lines = line_manager::get_lines(line_manager::FILE);
 
@@ -9,8 +11,21 @@ pub fn main() {
     // println!("Problem 2: {}", problem2(lines));
 }
 
-fn problem1(lines: Lines) -> i32 {
-    todo!()
+fn problem1(lines: Lines) -> u32 {
+    let mut forest = Forest::new();
+    forest.parse_string(
+        &lines
+            .map(|line| {
+                let mut line = line.unwrap();
+                line.push('\n');
+                line
+            })
+            .collect::<String>()
+    );
+    forest.set_visible();
+    print!("{}", forest.get_forest(true));
+
+    forest.calc_visible()
 }
 
 fn problem2(lines: Lines) -> i32 {

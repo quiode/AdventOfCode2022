@@ -1,5 +1,7 @@
 use std::{ fmt::Debug };
 
+use strum::{ EnumIter, IntoEnumIterator };
+
 #[derive(Debug)]
 pub struct Forest {
     trees: Vec<Tree>,
@@ -20,7 +22,12 @@ impl Forest {
         for line in string.lines() {
             for str_height in line.chars() {
                 let height = str_height.to_digit(10).unwrap();
-                self.trees.push(Tree { index: index, visible: None, height: height });
+                self.trees.push(Tree {
+                    index: index,
+                    visible: None,
+                    height: height,
+                    scenic_score: None,
+                });
                 index += 1;
             }
             row_count += 1;
@@ -77,12 +84,12 @@ impl Forest {
 
         match direction {
             Direction::TOP => {
-                for i in 0..row {
+                for i in (0..row).rev() {
                     output_trees.push(&trees[Self::get_index(column, i, dimensions)]);
                 }
             }
             Direction::LEFT => {
-                for i in 0..column {
+                for i in (0..column).rev() {
                     output_trees.push(&trees[Self::get_index(i, row, dimensions)]);
                 }
             }
@@ -195,15 +202,70 @@ impl Forest {
     fn get_index(column: usize, row: usize, dimensions: (usize, usize)) -> usize {
         row * dimensions.0 + column
     }
+
+    /// calculates the scenic score of the `tree`
+    fn calc_scenic_score<'a>(
+        tree: &'a Tree,
+        trees: &'a Vec<Tree>,
+        dimensions: (usize, usize)
+    ) -> usize {
+        // scenic score = amount of trees visible in each direction
+        let mut score = 1;
+
+        let mut direction_trees = Vec::with_capacity(4);
+
+        for direction in Direction::iter() {
+            // push all trees for each direction
+            direction_trees.push(Self::get_every(direction, tree, trees, dimensions));
+        }
+
+        for direction_tree in direction_trees {
+            let mut direction_score = 0;
+            for s_tree in direction_tree {
+                direction_score += 1;
+                if s_tree.height >= tree.height {
+                    break;
+                }
+            }
+            score *= direction_score;
+        }
+
+        score
+    }
+
+    /// calculates the highest scenic score possible
+    pub fn find_highest_scenic_score(&mut self) -> usize {
+        if self.trees.len() == 0 {
+            return 0;
+        }
+
+        let trees_clone = self.trees.clone();
+
+        for tree in &mut self.trees {
+            if tree.scenic_score.is_none() {
+                tree.scenic_score = Some(
+                    Self::calc_scenic_score(&tree, &trees_clone, self.dimensions)
+                );
+            }
+        }
+
+        self.trees
+            .iter()
+            .max_by(|x, y| x.scenic_score.unwrap_or(0).cmp(&y.scenic_score.unwrap_or(0)))
+            .unwrap()
+            .scenic_score.unwrap_or(0)
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct Tree {
     index: usize,
-    visible: Option<bool>,
     height: u32,
+    visible: Option<bool>,
+    scenic_score: Option<usize>,
 }
 
+#[derive(EnumIter)]
 pub enum Direction {
     TOP,
     LEFT,

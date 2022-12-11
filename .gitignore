@@ -4,5 +4,8 @@
 *input.txt
 *input
 *test.json
-/.idea/
 solutions/
+
+# IDE's
+/.idea/
+/.vscode/

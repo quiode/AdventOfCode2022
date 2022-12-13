@@ -7,11 +7,11 @@ pub fn main() {
     // println!("Problem 2: {}", problem2(lines));
 }
 
-fn problem1(lines: Lines) -> i32 {
+fn problem1(lines: Lines) -> u32 {
     todo!()
 }
 
-fn problem2(lines: Lines) -> i32 {
+fn problem2(lines: Lines) -> u32 {
     todo!()
 }
 

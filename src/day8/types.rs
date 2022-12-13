@@ -1,6 +1,6 @@
-use std::{ fmt::Debug };
-
-use strum::{ EnumIter, IntoEnumIterator };
+use std::fmt::Debug;
+use strum::IntoEnumIterator;
+use crate::shared::Direction;
 
 #[derive(Debug)]
 pub struct Forest {
@@ -42,7 +42,7 @@ impl Forest {
         dimensions: (usize, usize)
     ) -> &'a Tree {
         match direction {
-            Direction::TOP => {
+            Direction::UP => {
                 let top_index = tree.index - dimensions.0;
                 &trees[top_index]
             }
@@ -53,7 +53,7 @@ impl Forest {
                     return &trees[tree.index - 1];
                 }
             }
-            Direction::BOTTOM => {
+            Direction::DOWN => {
                 let top_index = tree.index + dimensions.0;
                 if top_index >= trees.len() {
                     &trees[trees.len() - top_index]
@@ -79,11 +79,11 @@ impl Forest {
         dimensions: (usize, usize)
     ) -> Vec<&'a Tree> {
         let mut output_trees: Vec<&Tree> = vec![];
-        let column = Self::calc_column(tree, trees, dimensions);
-        let row = Self::calc_row(tree, trees, dimensions);
+        let column = Self::calc_column(tree, dimensions);
+        let row = Self::calc_row(tree, dimensions);
 
         match direction {
-            Direction::TOP => {
+            Direction::UP => {
                 for i in (0..row).rev() {
                     output_trees.push(&trees[Self::get_index(column, i, dimensions)]);
                 }
@@ -93,7 +93,7 @@ impl Forest {
                     output_trees.push(&trees[Self::get_index(i, row, dimensions)]);
                 }
             }
-            Direction::BOTTOM => {
+            Direction::DOWN => {
                 for i in row + 1..dimensions.1 {
                     output_trees.push(&trees[Self::get_index(column, i, dimensions)]);
                 }
@@ -133,13 +133,13 @@ impl Forest {
                     Self::get_every(Direction::LEFT, tree, &trees, self.dimensions)
                         .iter()
                         .all(|t| t.height < tree.height) ||
-                    Self::get_every(Direction::TOP, tree, &trees, self.dimensions)
+                    Self::get_every(Direction::UP, tree, &trees, self.dimensions)
                         .iter()
                         .all(|t| t.height < tree.height) ||
                     Self::get_every(Direction::RIGHT, tree, &trees, self.dimensions)
                         .iter()
                         .all(|t| t.height < tree.height) ||
-                    Self::get_every(Direction::BOTTOM, tree, &trees, self.dimensions)
+                    Self::get_every(Direction::DOWN, tree, &trees, self.dimensions)
                         .iter()
                         .all(|t| t.height < tree.height);
 
@@ -189,12 +189,12 @@ impl Forest {
     }
 
     /// calculates in which row the tree is
-    fn calc_row<'a>(tree: &'a Tree, trees: &'a Vec<Tree>, dimensions: (usize, usize)) -> usize {
+    fn calc_row<'a>(tree: &'a Tree, dimensions: (usize, usize)) -> usize {
         tree.index / dimensions.0
     }
 
     /// calculates in which column the tree is
-    fn calc_column<'a>(tree: &'a Tree, trees: &'a Vec<Tree>, dimensions: (usize, usize)) -> usize {
+    fn calc_column<'a>(tree: &'a Tree, dimensions: (usize, usize)) -> usize {
         tree.index % dimensions.0
     }
 
@@ -263,12 +263,4 @@ pub struct Tree {
     height: u32,
     visible: Option<bool>,
     scenic_score: Option<usize>,
-}
-
-#[derive(EnumIter)]
-pub enum Direction {
-    TOP,
-    LEFT,
-    BOTTOM,
-    RIGHT,
 }

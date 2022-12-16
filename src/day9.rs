@@ -1,5 +1,7 @@
 use crate::{ types::Lines, line_manager };
 
+use self::imp::{ read_instructions, Helper };
+
 const TEST_INPUT: &str = "R 4
 U 4
 L 3
@@ -17,8 +19,13 @@ pub fn main() {
     // println!("Problem 2: {}", problem2(lines));
 }
 
-fn problem1(lines: Lines) -> u32 {
-    todo!()
+fn problem1(lines: Lines) -> usize {
+    let mut helper = Helper::new();
+    let instructions = read_instructions(lines);
+
+    helper.execute_instructions(instructions);
+
+    helper.count_positions()
 }
 
 fn problem2(lines: Lines) -> u32 {
@@ -26,7 +33,9 @@ fn problem2(lines: Lines) -> u32 {
 }
 
 mod imp {
-    use crate::{ types::Lines, shared::Direction };
+    use std::{ collections::HashSet };
+
+    use crate::{ types::Lines, shared::* };
 
     pub fn read_instructions(lines: Lines) -> Vec<(Direction, usize)> {
         let mut instructions: Vec<(Direction, usize)> = vec![];
@@ -50,6 +59,160 @@ mod imp {
         }
 
         instructions
+    }
+
+    pub struct Helper {
+        tail: Coordinates,
+        head: Coordinates,
+        tail_positions: HashSet<Coordinates>,
+    }
+
+    impl Helper {
+        pub fn new() -> Self {
+            let mut hash_set = HashSet::new();
+            hash_set.insert((0, 0));
+            Self { tail: (0, 0), head: (0, 0), tail_positions: hash_set }
+        }
+
+        /// moves the head into the desired direction, if the tail is too far away, also move tail
+        fn move_head(&mut self, direction: Direction) {
+            match direction {
+                Direction::UP => {
+                    self.head.1 += 1;
+                }
+                Direction::DOWN => {
+                    self.head.1 -= 1;
+                }
+                Direction::LEFT => {
+                    self.head.0 -= 1;
+                }
+                Direction::RIGHT => {
+                    self.head.0 += 1;
+                }
+            }
+
+            if self.check_tail() {
+                return;
+            }
+
+            // moves tail near head
+            self.move_tail((
+                (self.head.0 - self.tail.0).signum(),
+                (self.head.1 - self.tail.1).signum(),
+            ));
+        }
+
+        /// checks if the tail is still in reach of the head or not
+        fn check_tail(&self) -> bool {
+            // check left, right, up, down
+            !((self.head.0 - self.tail.0).abs() >= 2 || (self.head.1 - self.tail.1).abs() >= 2)
+        }
+
+        /// moves tail to direction and logs new position
+        fn move_tail(&mut self, direction: (i32, i32)) {
+            self.tail.0 += direction.0;
+            self.tail.1 += direction.1;
+
+            self.tail_positions.insert(self.tail);
+        }
+
+        /// executes an instruction
+        fn execute_instruction(&mut self, instruction: (Direction, usize)) {
+            for _ in 0..instruction.1 {
+                self.move_head(instruction.0);
+            }
+        }
+        /// counts how on how many positions the tail has been in
+        pub fn count_positions(&self) -> usize {
+            self.tail_positions.len()
+        }
+
+        /// executes all instructions
+        pub fn execute_instructions(&mut self, instructions: Vec<(Direction, usize)>) {
+            for instruction in instructions {
+                self.execute_instruction(instruction);
+            }
+        }
+
+        /// prints the grid
+        pub fn print(&self) {
+            let smallest_x = vec![
+                self.tail.0,
+                self.head.0,
+                self.tail_positions
+                    .iter()
+                    .min_by(|x, y| x.0.cmp(&y.0))
+                    .unwrap().0
+            ]
+                .iter()
+                .min()
+                .unwrap()
+                .to_owned();
+
+            let biggest_x = vec![
+                self.tail.0,
+                self.head.0,
+                self.tail_positions
+                    .iter()
+                    .max_by(|x, y| x.0.cmp(&y.0))
+                    .unwrap().0
+            ]
+                .iter()
+                .max()
+                .unwrap()
+                .to_owned();
+
+            let smallest_y = vec![
+                self.tail.1,
+                self.head.1,
+                self.tail_positions
+                    .iter()
+                    .min_by(|x, y| x.1.cmp(&y.1))
+                    .unwrap().1
+            ]
+                .iter()
+                .min()
+                .unwrap()
+                .to_owned();
+
+            let biggest_y = vec![
+                self.tail.1,
+                self.head.1,
+                self.tail_positions
+                    .iter()
+                    .max_by(|x, y| x.1.cmp(&y.1))
+                    .unwrap().1
+            ]
+                .iter()
+                .max()
+                .unwrap()
+                .to_owned();
+
+            for y in (smallest_y..=biggest_y).rev() {
+                for x in smallest_x..=biggest_x {
+                    let mut printed = false;
+                    print!(" ");
+                    if self.tail == (x, y) {
+                        printed = true;
+                        print!("T");
+                    }
+                    if self.head == (x, y) {
+                        printed = true;
+                        print!("H");
+                    }
+                    if self.tail_positions.contains(&(x, y)) {
+                        printed = true;
+                        print!("#");
+                    }
+                    if !printed {
+                        print!(".");
+                    }
+                    print!(" ");
+                }
+
+                println!();
+            }
+        }
     }
 
     #[cfg(test)]

@@ -7,3 +7,6 @@ pub enum Direction {
     DOWN,
     RIGHT,
 }
+
+/// (x,y)
+pub type Coordinates = (i32, i32);

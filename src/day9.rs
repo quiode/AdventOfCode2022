@@ -12,15 +12,25 @@ L 5
 R 2
 ";
 
+const TEST_2_INPUT: &str = "R 5
+U 8
+L 8
+D 3
+R 17
+D 10
+L 25
+U 20
+";
+
 pub fn main() {
     let lines = line_manager::get_lines(line_manager::FILE);
 
-    println!("Problem 1: {}", problem1(lines));
-    // println!("Problem 2: {}", problem2(lines));
+    // println!("Problem 1: {}", problem1(lines));
+    println!("Problem 2: {}", problem2(lines));
 }
 
 fn problem1(lines: Lines) -> usize {
-    let mut helper = Helper::new();
+    let mut helper = Helper::default();
     let instructions = read_instructions(lines);
 
     helper.execute_instructions(instructions);
@@ -28,12 +38,17 @@ fn problem1(lines: Lines) -> usize {
     helper.count_positions()
 }
 
-fn problem2(lines: Lines) -> u32 {
-    todo!()
+fn problem2(lines: Lines) -> usize {
+    let mut helper = Helper::new(10);
+    let instructions = read_instructions(lines);
+
+    helper.execute_instructions(instructions);
+
+    helper.count_positions()
 }
 
 mod imp {
-    use std::{ collections::HashSet };
+    use std::collections::HashSet;
 
     use crate::{ types::Lines, shared::* };
 
@@ -62,66 +77,69 @@ mod imp {
     }
 
     pub struct Helper {
-        tail: Coordinates,
-        head: Coordinates,
+        /// the blocks of the rope
+        blocks: Vec<Coordinates>,
         tail_positions: HashSet<Coordinates>,
     }
 
     impl Helper {
-        pub fn new() -> Self {
+        pub fn new(block_count: u32) -> Self {
             let mut hash_set = HashSet::new();
             hash_set.insert((0, 0));
-            Self { tail: (0, 0), head: (0, 0), tail_positions: hash_set }
-        }
 
-        /// moves the head into the desired direction, if the tail is too far away, also move tail
-        fn move_head(&mut self, direction: Direction) {
-            match direction {
-                Direction::UP => {
-                    self.head.1 += 1;
-                }
-                Direction::DOWN => {
-                    self.head.1 -= 1;
-                }
-                Direction::LEFT => {
-                    self.head.0 -= 1;
-                }
-                Direction::RIGHT => {
-                    self.head.0 += 1;
-                }
+            let mut blocks: Vec<Coordinates> = Vec::new();
+
+            for _ in 0..block_count {
+                blocks.push((0, 0));
             }
 
-            if self.check_tail() {
+            Self {
+                blocks,
+                tail_positions: hash_set,
+            }
+        }
+
+        /// moves a block in the desired direction, if the next block is too far away, also move the next block
+        fn move_block(&mut self, direction: Coordinates, block_index: usize) {
+            self.blocks[block_index].0 += direction.0;
+            self.blocks[block_index].1 += direction.1;
+
+            // if block is the tail block, add new position to tail positions
+            if block_index == self.blocks.len() - 1 {
+                self.tail_positions.insert(self.blocks[block_index]);
                 return;
             }
 
-            // moves tail near head
-            self.move_tail((
-                (self.head.0 - self.tail.0).signum(),
-                (self.head.1 - self.tail.1).signum(),
-            ));
+            if self.check_child(block_index) {
+                return;
+            }
+
+            // moves the next block
+            self.move_block(
+                (
+                    (self.blocks[block_index].0 - self.blocks[block_index + 1].0).signum(),
+                    (self.blocks[block_index].1 - self.blocks[block_index + 1].1).signum(),
+                ),
+                block_index + 1
+            );
         }
 
-        /// checks if the tail is still in reach of the head or not
-        fn check_tail(&self) -> bool {
+        /// checks if the next block is still in reach of the previous block or not
+        fn check_child(&self, block_index: usize) -> bool {
             // check left, right, up, down
-            !((self.head.0 - self.tail.0).abs() >= 2 || (self.head.1 - self.tail.1).abs() >= 2)
-        }
-
-        /// moves tail to direction and logs new position
-        fn move_tail(&mut self, direction: (i32, i32)) {
-            self.tail.0 += direction.0;
-            self.tail.1 += direction.1;
-
-            self.tail_positions.insert(self.tail);
+            !(
+                (self.blocks[block_index].0 - self.blocks[block_index + 1].0).abs() >= 2 ||
+                (self.blocks[block_index].1 - self.blocks[block_index + 1].1).abs() >= 2
+            )
         }
 
         /// executes an instruction
         fn execute_instruction(&mut self, instruction: (Direction, usize)) {
             for _ in 0..instruction.1 {
-                self.move_head(instruction.0);
+                self.move_block(instruction.0.into(), 0);
             }
         }
+
         /// counts how on how many positions the tail has been in
         pub fn count_positions(&self) -> usize {
             self.tail_positions.len()
@@ -137,9 +155,11 @@ mod imp {
         /// prints the grid
         pub fn print(&self) {
             let smallest_x = vec![
-                self.tail.0,
-                self.head.0,
                 self.tail_positions
+                    .iter()
+                    .min_by(|x, y| x.0.cmp(&y.0))
+                    .unwrap().0,
+                self.blocks
                     .iter()
                     .min_by(|x, y| x.0.cmp(&y.0))
                     .unwrap().0
@@ -150,8 +170,10 @@ mod imp {
                 .to_owned();
 
             let biggest_x = vec![
-                self.tail.0,
-                self.head.0,
+                self.blocks
+                    .iter()
+                    .max_by(|x, y| x.0.cmp(&y.0))
+                    .unwrap().0,
                 self.tail_positions
                     .iter()
                     .max_by(|x, y| x.0.cmp(&y.0))
@@ -163,8 +185,10 @@ mod imp {
                 .to_owned();
 
             let smallest_y = vec![
-                self.tail.1,
-                self.head.1,
+                self.blocks
+                    .iter()
+                    .min_by(|x, y| x.1.cmp(&y.1))
+                    .unwrap().1,
                 self.tail_positions
                     .iter()
                     .min_by(|x, y| x.1.cmp(&y.1))
@@ -176,8 +200,10 @@ mod imp {
                 .to_owned();
 
             let biggest_y = vec![
-                self.tail.1,
-                self.head.1,
+                self.blocks
+                    .iter()
+                    .max_by(|x, y| x.1.cmp(&y.1))
+                    .unwrap().1,
                 self.tail_positions
                     .iter()
                     .max_by(|x, y| x.1.cmp(&y.1))
@@ -192,13 +218,19 @@ mod imp {
                 for x in smallest_x..=biggest_x {
                     let mut printed = false;
                     print!(" ");
-                    if self.tail == (x, y) {
-                        printed = true;
-                        print!("T");
-                    }
-                    if self.head == (x, y) {
-                        printed = true;
-                        print!("H");
+                    for (index, block) in self.blocks.iter().enumerate() {
+                        if block.0 == x && block.1 == y {
+                            if index == 0 {
+                                print!("H");
+                            } else if index == self.blocks.len() - 1 {
+                                print!("T");
+                            } else {
+                                print!("{index}");
+                            }
+
+                            printed = true;
+                            break;
+                        }
                     }
                     if self.tail_positions.contains(&(x, y)) {
                         printed = true;
@@ -211,6 +243,18 @@ mod imp {
                 }
 
                 println!();
+            }
+        }
+    }
+
+    impl Default for Helper {
+        fn default() -> Self {
+            let mut hash_set: HashSet<Coordinates> = HashSet::new();
+            hash_set.insert((0, 0));
+
+            Self {
+                blocks: vec![(0, 0), (0, 0)],
+                tail_positions: hash_set,
             }
         }
     }
@@ -250,9 +294,9 @@ mod imp {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ line_manager::{ create_lines, TEST_FILE }, day9::TEST_INPUT };
+    use crate::{ line_manager::{ create_lines, TEST_FILE }, day9::{ TEST_INPUT, TEST_2_INPUT } };
 
-    use super::problem1;
+    use super::{ problem1, problem2 };
 
     #[test]
     fn problem1_test() {
@@ -263,6 +307,8 @@ mod tests {
 
     #[test]
     fn problem2_test() {
-        todo!()
+        let solution = problem2(create_lines(TEST_2_INPUT, TEST_FILE));
+
+        assert_eq!(solution, 36);
     }
 }

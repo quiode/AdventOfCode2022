@@ -5,8 +5,8 @@ use self::imp::{ State, get_instructions, execute_instruction, Instruction };
 pub fn main() {
     let lines = line_manager::get_lines(line_manager::FILE);
 
-    println!("Problem 1: {}", problem1(lines));
-    // println!("Problem 2: {}", problem2(lines));
+    //println!("Problem 1: {}", problem1(lines));
+    println!("Problem 2: \n{}", problem2(lines));
 }
 
 fn problem1(lines: Lines) -> i32 {
@@ -31,8 +31,39 @@ fn problem1(lines: Lines) -> i32 {
     return sum;
 }
 
-fn problem2(lines: Lines) -> u32 {
-    todo!()
+fn problem2(lines: Lines) -> String {
+    let mut state = State::default();
+    let mut output = String::new();
+    let instructions = get_instructions(lines);
+
+    for instruction in instructions {
+        let crt_pos = (state.get_cycle() + 39) % 40;
+
+        if
+            (crt_pos as i32) == state.get_xval() - 1 ||
+            (crt_pos as i32) == state.get_xval() ||
+            (crt_pos as i32) == state.get_xval() + 1
+        {
+            output.push('#');
+        } else {
+            output.push('.');
+        }
+
+        if matches!(instruction, Instruction::addx(_)) {
+            if
+                ((crt_pos + 2) as i32) == state.get_xval() ||
+                (crt_pos as i32) == state.get_xval() ||
+                ((crt_pos + 1) as i32) == state.get_xval()
+            {
+                output.push('#');
+            } else {
+                output.push('.');
+            }
+        }
+        execute_instruction(&mut state, instruction);
+    }
+
+    output
 }
 
 pub mod imp {
@@ -100,7 +131,7 @@ pub mod imp {
 
 #[cfg(test)]
 mod tests {
-    use crate::line_manager::{ create_lines, TEST_FILE };
+    use crate::{ line_manager::{ create_lines, TEST_FILE }, day10::problem2 };
 
     use super::problem1;
 
@@ -263,6 +294,167 @@ noop";
 
     #[test]
     fn problem2_test() {
-        todo!()
+        let input =
+            "addx 15
+addx -11
+addx 6
+addx -3
+addx 5
+addx -1
+addx -8
+addx 13
+addx 4
+noop
+addx -1
+addx 5
+addx -1
+addx 5
+addx -1
+addx 5
+addx -1
+addx 5
+addx -1
+addx -35
+addx 1
+addx 24
+addx -19
+addx 1
+addx 16
+addx -11
+noop
+noop
+addx 21
+addx -15
+noop
+noop
+addx -3
+addx 9
+addx 1
+addx -3
+addx 8
+addx 1
+addx 5
+noop
+noop
+noop
+noop
+noop
+addx -36
+noop
+addx 1
+addx 7
+noop
+noop
+noop
+addx 2
+addx 6
+noop
+noop
+noop
+noop
+noop
+addx 1
+noop
+noop
+addx 7
+addx 1
+noop
+addx -13
+addx 13
+addx 7
+noop
+addx 1
+addx -33
+noop
+noop
+noop
+addx 2
+noop
+noop
+noop
+addx 8
+noop
+addx -1
+addx 2
+addx 1
+noop
+addx 17
+addx -9
+addx 1
+addx 1
+addx -3
+addx 11
+noop
+noop
+addx 1
+noop
+addx 1
+noop
+noop
+addx -13
+addx -19
+addx 1
+addx 3
+addx 26
+addx -30
+addx 12
+addx -1
+addx 3
+addx 1
+noop
+noop
+noop
+addx -9
+addx 18
+addx 1
+addx 2
+noop
+noop
+addx 9
+noop
+noop
+noop
+addx -1
+addx 2
+addx -37
+addx 1
+addx 3
+noop
+addx 15
+addx -21
+addx 22
+addx -6
+addx 1
+noop
+addx 2
+addx 1
+noop
+addx -10
+noop
+noop
+addx 20
+addx 1
+addx 2
+addx 2
+addx -6
+addx -11
+noop
+noop
+noop";
+
+        let lines = create_lines(input, TEST_FILE);
+
+        let solution = problem2(lines);
+
+        assert_eq!(
+            "##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....
+",
+            solution
+        );
     }
 }

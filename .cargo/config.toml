@@ -1,3 +1,0 @@
-[http]
-# https://github.com/rust-lang/cargo/issues/8688#issuecomment-689023520
-check-revoke = false

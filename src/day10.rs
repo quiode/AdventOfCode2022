@@ -39,6 +39,7 @@ fn problem2(lines: Lines) -> String {
     for instruction in instructions {
         let crt_pos = (state.get_cycle() + 39) % 40;
 
+        // check for all three positions
         if
             (crt_pos as i32) == state.get_xval() - 1 ||
             (crt_pos as i32) == state.get_xval() ||
@@ -49,11 +50,12 @@ fn problem2(lines: Lines) -> String {
             output.push('.');
         }
 
+        // check for cycle during addx
         if matches!(instruction, Instruction::addx(_)) {
             if
-                ((crt_pos + 2) as i32) == state.get_xval() ||
+                ((crt_pos as i32) + 2) % 40 == state.get_xval() ||
                 (crt_pos as i32) == state.get_xval() ||
-                ((crt_pos + 1) as i32) == state.get_xval()
+                ((crt_pos as i32) + 1) % 40 == state.get_xval()
             {
                 output.push('#');
             } else {
@@ -63,7 +65,15 @@ fn problem2(lines: Lines) -> String {
         execute_instruction(&mut state, instruction);
     }
 
-    output
+    output = output
+        .chars()
+        .collect::<Vec<char>>()
+        .chunks(40)
+        .map(|c| c.iter().collect::<String>())
+        .collect::<Vec<String>>()
+        .join("\n");
+
+    output.trim().to_string()
 }
 
 pub mod imp {
@@ -452,8 +462,7 @@ noop";
 ####....####....####....####....####....
 #####.....#####.....#####.....#####.....
 ######......######......######......####
-#######.......#######.......#######.....
-",
+#######.......#######.......#######.....",
             solution
         );
     }

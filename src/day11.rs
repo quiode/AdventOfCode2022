@@ -5,29 +5,29 @@ use self::imp::*;
 pub fn main() {
     let lines = line_manager::get_lines(line_manager::FILE);
 
-    println!("Problem 1: {}", problem1(lines));
-    // println!("Problem 2: {}", problem2(lines));
+    // println!("Problem 1: {}", problem1(lines));
+    println!("Problem 2: {}", problem2(lines));
 }
 
-fn problem1(lines: Lines) -> u32 {
+fn problem1(lines: Lines) -> u64 {
     // this works
     let mut monkeys = create_monkeys_from_lines(lines);
 
-    for i in 0..20 {
+    for _ in 0..20 {
         for index in 0..monkeys.len() {
             for item in monkeys[index].items.clone() {
                 monkeys[index].inspections += 1;
-                let mut new_worry_level = execute_operation(item, monkeys[index].operation);
+                let mut new_worry_level = execute_operation(item, monkeys[index].operation.clone());
                 new_worry_level = relax(new_worry_level);
 
                 monkeys[index].items.remove(0);
                 let new_index;
-                if monkeys[index].test.execute_test(new_worry_level) {
+                if monkeys[index].test.execute_test(new_worry_level.clone()) {
                     new_index = monkeys[index].test.if_true;
                 } else {
                     new_index = monkeys[index].test.if_false;
                 }
-                monkeys[new_index].items.push(new_worry_level);
+                monkeys[new_index].items.push(new_worry_level.clone());
             }
         }
     }
@@ -36,35 +36,56 @@ fn problem1(lines: Lines) -> u32 {
     return monkeys[monkeys.len() - 1].inspections * monkeys[monkeys.len() - 2].inspections;
 }
 
-fn problem2(lines: Lines) -> u32 {
-    todo!()
+fn problem2(lines: Lines) -> u64 {
+    // this works
+    let mut monkeys = create_monkeys_from_lines(lines);
+
+    for _ in 0..1000 {
+        for index in 0..monkeys.len() {
+            for item in monkeys[index].items.clone() {
+                monkeys[index].inspections += 1;
+                let new_worry_level = execute_operation(item, monkeys[index].operation.clone());
+                monkeys[index].items.remove(0);
+                let new_index;
+                if monkeys[index].test.execute_test(new_worry_level.clone()) {
+                    new_index = monkeys[index].test.if_true;
+                } else {
+                    new_index = monkeys[index].test.if_false;
+                }
+                monkeys[new_index].items.push(new_worry_level.clone());
+            }
+        }
+    }
+
+    monkeys.sort_by_key(|k| k.inspections);
+    return monkeys[monkeys.len() - 1].inspections * monkeys[monkeys.len() - 2].inspections;
 }
 
 pub mod imp {
-    use std::{ iter::Peekable };
+    use std::iter::Peekable;
 
-    use num::Integer;
+    use num::{ Integer, BigUint, bigint::ToBigUint };
 
     use crate::types::Lines;
 
     pub type Operation = (OperationValue, Opperand, OperationValue);
 
-    #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(Debug, Clone)]
     pub struct Monkey {
         id: usize,
         // items of the monkey (i32 is stress level)
-        pub items: Vec<i32>,
+        pub items: Vec<BigUint>,
         // opperation the monkey performs
         pub operation: Operation,
         // test to test to which monkey it throws next
         pub test: Test,
         // number of inspections
-        pub inspections: u32,
+        pub inspections: u64,
     }
 
     impl Monkey {
         fn new(
-            items: Vec<i32>,
+            items: Vec<BigUint>,
             operation: (OperationValue, Opperand, OperationValue),
             test: Test,
             id: usize
@@ -77,13 +98,13 @@ pub mod imp {
         }
     }
 
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(Debug, Clone)]
     pub enum OperationValue {
-        Number(i32),
+        Number(BigUint),
         Old,
     }
 
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(Debug, Clone)]
     pub enum Opperand {
         Add,
         Subtract,
@@ -91,7 +112,7 @@ pub mod imp {
         Divide,
     }
 
-    #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(Debug, Clone)]
     pub struct Test {
         // test case to test
         test: TestType,
@@ -102,30 +123,30 @@ pub mod imp {
     }
 
     impl Test {
-        pub fn execute_test(&self, worry_level: i32) -> bool {
-            match self.test {
+        pub fn execute_test(&self, worry_level: BigUint) -> bool {
+            match &self.test {
                 TestType::Divisible(num) => worry_level.is_multiple_of(&num),
             }
         }
     }
 
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(Debug, Clone)]
     pub enum TestType {
-        Divisible(i32),
+        Divisible(BigUint),
     }
 
     // function to execute on the worry_level after the monkey performs the opperation
-    pub fn relax(worry_level: i32) -> i32 {
-        worry_level / 3
+    pub fn relax(worry_level: BigUint) -> BigUint {
+        worry_level / (3).to_biguint().unwrap()
     }
 
-    pub fn execute_operation(worry_level: i32, operation: Operation) -> i32 {
+    pub fn execute_operation(worry_level: BigUint, operation: Operation) -> BigUint {
         let first_val;
         let second_val;
 
         match operation.0 {
             OperationValue::Old => {
-                first_val = worry_level;
+                first_val = worry_level.clone();
             }
             OperationValue::Number(num) => {
                 first_val = num;
@@ -254,7 +275,7 @@ pub mod imp {
 
 #[cfg(test)]
 mod tests {
-    use crate::line_manager::{ create_lines, TEST_FILE };
+    use crate::{ line_manager::{ create_lines, TEST_FILE }, day11::problem2 };
 
     use super::problem1;
 
@@ -295,6 +316,36 @@ Monkey 3:
 
     #[test]
     fn problem2_test() {
-        todo!()
+        let test_input =
+            "Monkey 0:
+  Starting items: 79, 98
+  Operation: new = old * 19
+  Test: divisible by 23
+    If true: throw to monkey 2
+    If false: throw to monkey 3
+
+Monkey 1:
+  Starting items: 54, 65, 75, 74
+  Operation: new = old + 6
+  Test: divisible by 19
+    If true: throw to monkey 2
+    If false: throw to monkey 0
+
+Monkey 2:
+  Starting items: 79, 60, 97
+  Operation: new = old * old
+  Test: divisible by 13
+    If true: throw to monkey 1
+    If false: throw to monkey 3
+
+Monkey 3:
+  Starting items: 74
+  Operation: new = old + 3
+  Test: divisible by 17
+    If true: throw to monkey 0
+    If false: throw to monkey 1";
+
+        let lines = create_lines(test_input, TEST_FILE);
+        assert_eq!(problem2(lines), 2713310158);
     }
 }

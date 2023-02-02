@@ -7,6 +7,7 @@ pub fn main() {
 
     // println!("Problem 1: {}", problem1(lines));
     println!("Problem 2: {}", problem2(lines));
+    // TODO: Theory for Problem 2: https://medium.com/@datasciencedisciple/advent-of-code-2022-in-python-day-11-5832b8f25c21
 }
 
 fn problem1(lines: Lines) -> u64 {

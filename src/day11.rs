@@ -1,6 +1,6 @@
 use crate::{ types::Lines, line_manager };
 
-use self::imp::create_monkeys_from_lines;
+use self::imp::{ create_monkeys_from_lines, execute_operation, relax, get_next_index };
 
 pub fn main() {
     let lines = line_manager::get_lines(line_manager::FILE);
@@ -11,8 +11,32 @@ pub fn main() {
 
 fn problem1(lines: Lines) -> u32 {
     // this works
-    let monkeys = create_monkeys_from_lines(lines);
-    todo!()
+    let mut monkeys = create_monkeys_from_lines(lines);
+
+    let mut index = 0;
+
+    for _ in 0..20 {
+        for item in monkeys[index].items.clone() {
+            monkeys[index].inspections += 1;
+            let mut new_worry_level = execute_operation(item, monkeys[index].operation);
+            new_worry_level = relax(new_worry_level);
+
+            if monkeys[index].test.execute_test(new_worry_level) {
+                monkeys[index].items.remove(0);
+                let new_index = monkeys[index].test.if_true;
+                monkeys[new_index].items.push(new_worry_level);
+            } else {
+                monkeys[index].items.remove(0);
+                let new_index = monkeys[index].test.if_false;
+                monkeys[new_index].items.push(new_worry_level);
+            }
+        }
+
+        index = get_next_index(&monkeys, index);
+    }
+
+    monkeys.sort_by_key(|k| k.inspections);
+    return monkeys[monkeys.len() - 1].inspections * monkeys[monkeys.len() - 2].inspections;
 }
 
 fn problem2(lines: Lines) -> u32 {
@@ -20,64 +44,117 @@ fn problem2(lines: Lines) -> u32 {
 }
 
 pub mod imp {
-    use std::iter::Peekable;
+    use std::{ iter::Peekable };
+
+    use num::Integer;
 
     use crate::types::Lines;
 
-    #[derive(Debug)]
+    pub type Operation = (OperationValue, Opperand, OperationValue);
+
+    #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
     pub struct Monkey {
+        id: usize,
         // items of the monkey (i32 is stress level)
-        items: Vec<i32>,
+        pub items: Vec<i32>,
         // opperation the monkey performs
-        operation: (OperationValue, Opperand, OperationValue),
+        pub operation: Operation,
         // test to test to which monkey it throws next
-        test: Test,
+        pub test: Test,
         // number of inspections
-        inspections: usize,
+        pub inspections: u32,
     }
 
     impl Monkey {
         fn new(
             items: Vec<i32>,
             operation: (OperationValue, Opperand, OperationValue),
-            test: Test
+            test: Test,
+            id: usize
         ) -> Self {
-            Self { items, operation, test, inspections: 0 }
+            Self { id, items, operation, test, inspections: 0 }
         }
     }
 
-    #[derive(Debug)]
-    enum OperationValue {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    pub enum OperationValue {
         Number(i32),
         Old,
     }
 
-    #[derive(Debug)]
-    enum Opperand {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    pub enum Opperand {
         Add,
         Subtract,
         Multiply,
         Divide,
     }
 
-    #[derive(Debug)]
-    struct Test {
+    #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct Test {
         // test case to test
         test: TestType,
         // monkey id if test is true
-        if_true: usize,
+        pub if_true: usize,
         // monkey id if test if false
-        if_false: usize,
+        pub if_false: usize,
     }
 
-    #[derive(Debug)]
-    enum TestType {
+    impl Test {
+        pub fn execute_test(&self, worry_level: i32) -> bool {
+            match self.test {
+                TestType::Divisible(num) => worry_level.is_multiple_of(&num),
+            }
+        }
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    pub enum TestType {
         Divisible(i32),
     }
 
+    // gets next index in vec or begins from the beginning
+    pub fn get_next_index<T>(vec: &Vec<T>, current_index: usize) -> usize {
+        if current_index + 1 >= vec.len() {
+            return 0;
+        }
+
+        current_index + 1
+    }
+
     // function to execute on the worry_level after the monkey performs the opperation
-    fn relax(worry_level: i32) -> i32 {
+    pub fn relax(worry_level: i32) -> i32 {
         worry_level / 3
+    }
+
+    pub fn execute_operation(worry_level: i32, operation: Operation) -> i32 {
+        let first_val;
+        let second_val;
+
+        match operation.0 {
+            OperationValue::Old => {
+                first_val = worry_level;
+            }
+            OperationValue::Number(num) => {
+                first_val = num;
+            }
+        }
+
+        match operation.2 {
+            OperationValue::Old => {
+                second_val = worry_level;
+            }
+            OperationValue::Number(num) => {
+                second_val = num;
+            }
+        }
+
+        match operation.1 {
+            Opperand::Add => first_val + second_val,
+            Opperand::Divide => first_val / second_val,
+            Opperand::Multiply => first_val * second_val,
+            Opperand::Subtract => first_val - second_val,
+        }
     }
 
     pub fn create_monkeys_from_lines(lines: Lines) -> Vec<Monkey> {
@@ -86,14 +163,14 @@ pub mod imp {
         let mut peekable_lines = lines.peekable();
 
         while peekable_lines.peek().is_some() {
-            let new_monkey = create_monkey_from_lines(&mut peekable_lines);
+            let new_monkey = create_monkey_from_lines(&mut peekable_lines, monkeys.len());
             monkeys.push(new_monkey);
         }
 
         monkeys
     }
 
-    fn create_monkey_from_lines(lines: &mut Peekable<Lines>) -> Monkey {
+    fn create_monkey_from_lines(lines: &mut Peekable<Lines>, new_id: usize) -> Monkey {
         // skip first line (monkey id)
         lines.next();
 
@@ -179,7 +256,7 @@ pub mod imp {
         // skip space
         lines.next();
 
-        Monkey::new(items, (first_op, opperand, second_op), test)
+        Monkey::new(items, (first_op, opperand, second_op), test, new_id)
     }
 }
 

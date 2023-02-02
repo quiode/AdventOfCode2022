@@ -1,6 +1,6 @@
 use crate::{ types::Lines, line_manager };
 
-use self::imp::{ create_monkeys_from_lines, execute_operation, relax, get_next_index };
+use self::imp::*;
 
 pub fn main() {
     let lines = line_manager::get_lines(line_manager::FILE);
@@ -13,26 +13,23 @@ fn problem1(lines: Lines) -> u32 {
     // this works
     let mut monkeys = create_monkeys_from_lines(lines);
 
-    let mut index = 0;
+    for i in 0..20 {
+        for index in 0..monkeys.len() {
+            for item in monkeys[index].items.clone() {
+                monkeys[index].inspections += 1;
+                let mut new_worry_level = execute_operation(item, monkeys[index].operation);
+                new_worry_level = relax(new_worry_level);
 
-    for _ in 0..20 {
-        for item in monkeys[index].items.clone() {
-            monkeys[index].inspections += 1;
-            let mut new_worry_level = execute_operation(item, monkeys[index].operation);
-            new_worry_level = relax(new_worry_level);
-
-            if monkeys[index].test.execute_test(new_worry_level) {
                 monkeys[index].items.remove(0);
-                let new_index = monkeys[index].test.if_true;
-                monkeys[new_index].items.push(new_worry_level);
-            } else {
-                monkeys[index].items.remove(0);
-                let new_index = monkeys[index].test.if_false;
+                let new_index;
+                if monkeys[index].test.execute_test(new_worry_level) {
+                    new_index = monkeys[index].test.if_true;
+                } else {
+                    new_index = monkeys[index].test.if_false;
+                }
                 monkeys[new_index].items.push(new_worry_level);
             }
         }
-
-        index = get_next_index(&monkeys, index);
     }
 
     monkeys.sort_by_key(|k| k.inspections);
@@ -74,6 +71,10 @@ pub mod imp {
         ) -> Self {
             Self { id, items, operation, test, inspections: 0 }
         }
+
+        pub fn get_id(&self) -> usize {
+            self.id
+        }
     }
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -111,15 +112,6 @@ pub mod imp {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
     pub enum TestType {
         Divisible(i32),
-    }
-
-    // gets next index in vec or begins from the beginning
-    pub fn get_next_index<T>(vec: &Vec<T>, current_index: usize) -> usize {
-        if current_index + 1 >= vec.len() {
-            return 0;
-        }
-
-        current_index + 1
     }
 
     // function to execute on the worry_level after the monkey performs the opperation
